@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ส่องหนู SongNoo</title>
+<link rel="icon" href="logo-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+/* VOICE: warm, calm clinic screening tool, same soft feel as LO-HIT
+   IDEA: a community health worker's photo checker, one card that takes a skin photo and gives back a clear answer
+   PICTURE: the upload card itself, then the photo with the AI heatmap over it beside a large verdict
+   COLOUR and TYPE: cream ground, deep teal for water and trust, coral for the arsenic finding; Nunito heads with IBM Plex Sans Thai
+   LAYOUT: centred hero, upload card, result split into photo and verdict, then how it works, model facts and limits */
+:root{color-scheme:light dark;--bg:#faf7f2;--card:#ffffff;--ink:#2d2a26;--mute:#6f6860;--line:#e8e1d6;--teal:#2f8878;--tealbg:#e6f3f0;--coral:#e3566b;--coralbg:#fdeaee;--amber:#b9770e;--amberbg:#fdf1dc;--green:#2f8a4f;--greenbg:#e4f4e9;--grey:#6f6860;--greybg:#f0ece6;--hdr:rgba(250,247,242,.92);--shadow:0 1px 2px rgba(45,42,38,.05),0 8px 28px rgba(45,42,38,.07)}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#181614;--card:#22201d;--ink:#f1ece4;--mute:#b3aaa0;--line:#3a3632;--teal:#6cc2b1;--tealbg:#1f3532;--coral:#ff7d93;--coralbg:#3d2128;--amber:#f0b44c;--amberbg:#3a2f1a;--green:#6fd08f;--greenbg:#1c3424;--grey:#b3aaa0;--greybg:#2c2926;--hdr:rgba(24,22,20,.92)}}
+:root[data-theme=light]{color-scheme:light;--bg:#faf7f2;--card:#ffffff;--ink:#2d2a26;--mute:#6f6860;--line:#e8e1d6;--teal:#2f8878;--tealbg:#e6f3f0;--coral:#e3566b;--coralbg:#fdeaee;--amber:#b9770e;--amberbg:#fdf1dc;--green:#2f8a4f;--greenbg:#e4f4e9;--grey:#6f6860;--greybg:#f0ece6;--hdr:rgba(250,247,242,.92)}
+:root[data-theme=dark]{color-scheme:dark;--bg:#181614;--card:#22201d;--ink:#f1ece4;--mute:#b3aaa0;--line:#3a3632;--teal:#6cc2b1;--tealbg:#1f3532;--coral:#ff7d93;--coralbg:#3d2128;--amber:#f0b44c;--amberbg:#3a2f1a;--green:#6fd08f;--greenbg:#1c3424;--grey:#b3aaa0;--greybg:#2c2926;--hdr:rgba(24,22,20,.92)}
+*{box-sizing:border-box;min-width:0}
+html{scroll-padding-top:80px}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 "IBM Plex Sans Thai","Noto Sans Thai",sans-serif;overflow-x:clip;
+background-image:radial-gradient(circle at 15% 8%,rgb(226 85 111/.10),transparent 38%),radial-gradient(circle at 88% 30%,rgb(63 143 129/.10),transparent 40%);background-attachment:fixed}
+h1,h2,h3{font-family:Nunito,"IBM Plex Sans Thai",sans-serif;font-weight:800;line-height:1.2;margin:0;text-wrap:balance}
+button,input,label{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+.wrap{max-width:1080px;margin:0 auto;padding:0 max(4vw,16px)}
+header{position:sticky;top:0;z-index:5;background:var(--hdr);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.bar{display:flex;align-items:center;gap:12px;height:68px}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);margin-inline-end:auto}
+.logo img{display:block;width:44px;height:44px}
+.logo b{font-family:Nunito,"IBM Plex Sans Thai",sans-serif;font-size:24px;font-weight:800;line-height:1.1}.logo b span{color:var(--coral)}
+.logo small{display:block;font-size:11px;color:var(--mute);line-height:1.1}
+.iconbtn{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--card);display:grid;place-items:center}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;font-size:14px;font-weight:600;border:1px solid;white-space:nowrap}
+.pill i{width:9px;height:9px;border-radius:50%;background:currentColor}
+.st-load{color:var(--amber);background:var(--amberbg);border-color:var(--amberbg)}
+.st-load i{animation:pulse 1s infinite}
+.st-ok{color:var(--teal);background:var(--tealbg);border-color:var(--tealbg)}
+.st-err{color:var(--coral);background:var(--coralbg);border-color:var(--coralbg)}
+@keyframes pulse{50%{opacity:.3}}
+.hero{text-align:center;padding:56px 0 32px}
+.badge{display:inline-flex;gap:8px;align-items:center;padding:7px 18px;border-radius:999px;background:var(--card);box-shadow:var(--shadow);color:var(--coral);font-size:14px;font-weight:600}
+.badge::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--coral)}
+.hero h1{font-size:clamp(32px,6vw,50px);margin:22px 0 14px}.hero h1 span{color:var(--coral);display:block}
+.hero p{max-width:640px;margin:0 auto;color:var(--mute);font-size:17px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow)}
+.drop{border:2px dashed var(--line);border-radius:28px;padding:36px 20px;text-align:center;background:var(--card);transition:border-color .2s,background .2s;cursor:pointer;display:block}
+.drop:hover,.drop.over{border-color:var(--teal);background:var(--tealbg)}
+.drop svg.art{width:min(220px,60%);height:auto;display:block;margin:0 auto 10px}
+.drop h3{font-size:22px;margin:4px 0}.drop p{margin:0;color:var(--mute)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:16px}
+.chip{padding:5px 14px;border-radius:999px;background:var(--greybg);font-size:13px;color:var(--mute);font-weight:600}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:10px 22px;border-radius:999px;border:0;font-weight:600;background:var(--teal);color:#fff}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.demo{margin-top:16px;padding:14px 18px;border-radius:18px;background:var(--amberbg);color:var(--ink);font-size:15px}.demo b{color:var(--amber)}
+.tips{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:18px}
+.tip{padding:14px 16px;border-radius:18px;background:var(--card);border:1px solid var(--line);font-size:14px;color:var(--mute)}
+.tip b{display:block;color:var(--ink);font-size:15px}
+.samples{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px;align-items:center;color:var(--mute);font-size:14px}
+.samples button{display:flex;align-items:center;gap:8px;padding:6px 14px 6px 6px;border-radius:999px;border:1px solid var(--line);background:var(--card);min-height:44px}
+.samples img{width:32px;height:32px;border-radius:50%;object-fit:cover}
+section{padding:28px 0}
+.result{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:20px;align-items:start}
+.photo{padding:14px}
+.stage{position:relative;border-radius:16px;overflow:hidden;background:var(--greybg);aspect-ratio:1}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%}
+#heat{transition:opacity .3s}
+.scan{position:absolute;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--teal),transparent);box-shadow:0 0 18px var(--teal);top:0;animation:scan 1.4s ease-in-out infinite;display:none}
+.busy .scan{display:block}
+@keyframes scan{50%{top:calc(100% - 3px)}}
+@media (prefers-reduced-motion:reduce){.scan{animation:none;top:50%}.st-load i{animation:none}}
+.photo .row{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:12px;flex-wrap:wrap}
+.switch{display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;min-height:44px}
+.switch input{width:20px;height:20px;accent-color:var(--teal)}
+.legend{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mute)}
+.legend i{width:90px;height:10px;border-radius:5px;background:linear-gradient(90deg,#2b83ba,#abdda4,#fdae61,#d7191c)}
+.qc{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.qc span{font-size:13px;padding:4px 12px;border-radius:999px;font-weight:600}
+.ok{background:var(--greenbg);color:var(--green)}.warn{background:var(--amberbg);color:var(--amber)}
+.verdict{padding:24px}
+.tier{border-radius:20px;padding:20px;margin-bottom:18px}
+.tier small{font-weight:600;font-size:14px}
+.tier h2{font-size:clamp(24px,3.2vw,30px);margin:6px 0 8px}
+.tier p{margin:0}
+.t-red{background:var(--coralbg);color:var(--coral)}.t-amber{background:var(--amberbg);color:var(--amber)}
+.t-green{background:var(--greenbg);color:var(--green)}.t-grey{background:var(--greybg);color:var(--grey)}
+.tier p,.tier h2{color:var(--ink)}
+.bars{display:grid;gap:12px;margin:6px 0 18px}
+.bar-row{display:grid;grid-template-columns:9.5em minmax(0,1fr) 3.6em;gap:10px;align-items:center;font-size:15px}
+.bar-row .track{height:12px;border-radius:6px;background:var(--greybg);overflow:hidden}
+.bar-row .fill{height:100%;border-radius:6px;transition:width .6s}
+.bar-row b{text-align:right;font-variant-numeric:tabular-nums}
+.advice{font-size:15px;color:var(--mute);border-top:1px solid var(--line);padding-top:14px}
+.advice b{color:var(--ink)}
+.empty{text-align:center;color:var(--mute);padding:40px 16px}
+.ask{padding:22px;margin-top:20px}
+.ask h3{font-size:20px;margin-bottom:4px}.ask>p{margin:0 0 14px;color:var(--mute);font-size:15px}
+.qs{display:grid;gap:10px}
+.q{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px 14px;border:1px solid var(--line);border-radius:16px;font-size:15px}
+.yn{display:flex;gap:6px;flex:none}
+.yn button{min-width:56px;min-height:40px;border-radius:999px;border:1px solid var(--line);background:transparent;font-size:14px;font-weight:600}
+.yn button[aria-pressed=true]{background:var(--teal);border-color:var(--teal);color:#fff}
+#riskOut{margin-top:14px;padding:14px 16px;border-radius:16px;background:var(--greybg);font-size:15px}
+.feat{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.feat .card{padding:24px}
+.feat .ic{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;margin-bottom:14px}
+.feat h3{font-size:19px;margin-bottom:6px}.feat p{margin:0;color:var(--mute);font-size:15px}
+h2.sec{font-size:clamp(26px,3.6vw,34px);text-align:center;margin-bottom:8px}
+p.sec{text-align:center;color:var(--mute);max-width:640px;margin:0 auto 24px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:14px}
+.stat{padding:20px}
+.stat b{display:block;font-family:Nunito,sans-serif;font-size:clamp(28px,4vw,38px);font-weight:900;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat span{font-size:14px;color:var(--mute)}
+.stat em{display:block;font-style:normal;font-size:13px;color:var(--mute);margin-top:4px}
+.limits{padding:24px;margin-top:16px}
+.limits h3{font-size:19px;margin-bottom:8px}.limits p{margin:0 0 10px;color:var(--mute);font-size:15px}
+.hist{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 10px}
+.hist button{flex:none;width:84px;border:1px solid var(--line);background:var(--card);border-radius:14px;padding:6px;font-size:12px;text-align:center}
+.hist img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;display:block;margin-bottom:4px}
+footer{padding:34px 0 48px;color:var(--mute);font-size:14px;text-align:center}
+footer p{max-width:720px;margin:6px auto}
+.hide{display:none!important}
+@media(max-width:860px){.result{grid-template-columns:minmax(0,1fr)}.tips{grid-template-columns:repeat(2,minmax(0,1fr))}.feat{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){body{font-size:17px}.bar{height:60px}.logo small{display:none}.hero{padding:28px 0 18px}.hero p{font-size:16px}.drop{padding:26px 16px}.verdict{padding:18px}.tier{padding:16px}.advice{font-size:16px}.tip{font-size:15px}.feat p,.limits p{font-size:16px}.stat span,.stat em{font-size:14px}.pill .txt{display:none}.pill{padding:10px}.bar-row{grid-template-columns:7.6em minmax(0,1fr) 3.2em;font-size:14px}.q{flex-direction:column;align-items:flex-start}}
+</style>
+</head>
+<body>
+<header><div class="wrap bar">
+  <a class="logo" href="#top" aria-label="ส่องหนู หน้าแรก">
+    <img src="logo-mark.png" width="44" height="44" alt="">
+    <div><b>ส่อง<span>หนู</span></b><small>SongNoo AI คัดกรองผิวจากสารหนู</small></div>
+  </a>
+  <button class="iconbtn" id="themeBtn" aria-label="สลับโหมดสว่างและมืด"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+  <span class="pill st-load" id="status" role="status"><i></i><span class="txt">กำลังโหลด AI</span></span>
+</div></header>
+
+<main class="wrap" id="top">
+  <div class="hero">
+    <span class="badge">AI คัดกรองจากรูปถ่าย รันบนเครื่องคุณ</span>
+    <h1>ตรวจรอยโรคผิวหนัง<span>จากสารหนู</span></h1>
+    <p>ถ่ายรูปฝ่ามือ ฝ่าเท้า หรือผิวที่มีจุดผิดปกติ ระบบ AI จะแยกว่าเข้าได้กับรอยโรคจากสารหนู โรคผิวหนังอื่นที่หน้าตาคล้ายกัน หรือผิวปกติ พร้อมชี้ว่าดูตรงไหน รูปไม่ถูกส่งออกจากเครื่อง</p>
+  </div>
+
+  <label class="drop" id="drop" for="file">
+    <svg class="art" viewBox="0 0 240 150" aria-hidden="true">
+      <rect x="40" y="10" width="160" height="130" rx="26" fill="var(--tealbg)"/>
+      <path d="M92 132c-6-22-18-40-20-58-2-12 10-14 14-4l8 20V38c0-9 13-9 13 0v34-44c0-9 13-9 13 0v44-38c0-9 13-9 13 0v40-28c0-9 12-9 12 0v52c0 22-8 34-14 46z" fill="#e9c4a6" stroke="#c99a78" stroke-width="2"/>
+      <g fill="#8a5a3c"><circle cx="112" cy="96" r="3.4"/><circle cx="126" cy="104" r="2.6"/><circle cx="118" cy="114" r="3"/><circle cx="134" cy="92" r="2.2"/><circle cx="104" cy="108" r="2"/></g>
+      <rect x="40" y="10" width="160" height="130" rx="26" fill="none" stroke="var(--teal)" stroke-width="3" stroke-dasharray="10 8"/>
+      <circle cx="196" cy="24" r="20" fill="var(--teal)"/><path d="M196 33V16m-7 7 7-7 7 7" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <h3>อัปโหลดรูปผิวหนัง</h3>
+    <p>คลิก ลากไฟล์มาวาง หรือวางรูปด้วย Ctrl+V</p>
+    <div class="chips"><span class="chip">JPG</span><span class="chip">PNG</span><span class="chip">WEBP</span></div>
+    <input type="file" id="file" accept="image/*" class="hide">
+  </label>
+  <div class="demo hide" id="demo"><b>โหมดสาธิตหน้าจอ</b> โมเดลในหน้านี้ยังไม่ใช่ตัวที่ฝึกเสร็จ ผลที่ขึ้นเป็นผลจำลองเพื่อดูการทำงานของระบบเท่านั้น ระบบพร้อมเปลี่ยนเป็นโมเดลจริงทันทีที่ฝึกเสร็จ</div>
+  <div class="samples hide" id="samples"><span>ลองกับรูปตัวอย่าง</span></div>
+  <div class="tips">
+    <div class="tip"><b>ระยะใกล้</b>ให้รอยโรคเต็มกรอบประมาณครึ่งภาพ</div>
+    <div class="tip"><b>แสงธรรมชาติ</b>ไม่ใช้แฟลช ไม่ย้อนแสง</div>
+    <div class="tip"><b>ภาพคมชัด</b>แตะโฟกัสก่อนถ่าย มือไม่สั่น</div>
+    <div class="tip"><b>ทีละจุด</b>ฝ่ามือ ฝ่าเท้า หรือลำตัว แยกรูปกัน</div>
+  </div>
+
+  <section id="res" class="hide" aria-live="polite">
+    <div class="result">
+      <div class="card photo">
+        <div class="stage" id="stage"><canvas id="img"></canvas><canvas id="heat"></canvas><div class="scan"></div></div>
+        <div class="row">
+          <label class="switch"><input type="checkbox" id="camT" checked> แสดงจุดที่ AI ให้น้ำหนัก</label>
+          <span class="legend">น้อย <i></i> มาก</span>
+        </div>
+        <div class="qc" id="qc"></div>
+      </div>
+      <div class="card verdict" id="verdict"><div class="empty">กำลังวิเคราะห์</div></div>
+    </div>
+    <div class="hist" id="hist" aria-label="รูปที่ตรวจแล้วในรอบนี้"></div>
+
+    <div class="card ask">
+      <h3>ประวัติการสัมผัสสารหนู</h3>
+      <p>ตอบเพิ่มเพื่อช่วยแปลผล คำตอบไม่ได้เปลี่ยนคะแนนของ AI และไม่ถูกบันทึกไว้ที่ไหน</p>
+      <div class="qs" id="qs"></div>
+      <div id="riskOut">ยังไม่ได้ตอบคำถาม</div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="sec">ทำงานอย่างไร</h2>
+    <p class="sec">โมเดลเดียว ตอบ 3 กลุ่ม ไม่บังคับให้ทุกรอยโรคกลายเป็นสารหนู</p>
+    <div class="feat">
+      <div class="card"><div class="ic" style="background:var(--coralbg)"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--coral)" stroke-width="2"><circle cx="7" cy="7" r="3"/><circle cx="17" cy="7" r="3"/><circle cx="12" cy="17" r="3"/></svg></div><h3>แยก 3 กลุ่ม</h3><p>ผิวปกติ รอยโรคจากสารหนู และโรคผิวหนังอื่นที่หน้าตาคล้ายกัน เช่น หนังด้าน หูด เชื้อรา ด่างขาว ฝ้า สะเก็ดเงิน</p></div>
+      <div class="card"><div class="ic" style="background:var(--tealbg)"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1" fill="var(--teal)"/></svg></div><h3>ชี้จุดที่ AI มอง</h3><p>แผนที่ความร้อนแบบ CAM บอกว่าโมเดลให้น้ำหนักกับบริเวณไหนของภาพ ถ้าไปดูพื้นหลังแทนผิว แปลว่าควรถ่ายใหม่</p></div>
+      <div class="card"><div class="ic" style="background:var(--amberbg)"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2"><path d="M9 9a3 3 0 1 1 4 2.8c-.6.3-1 .9-1 1.6V15"/><circle cx="12" cy="18.5" r=".8" fill="var(--amber)"/><circle cx="12" cy="12" r="10"/></svg></div><h3>บอกเมื่อไม่แน่ใจ</h3><p>ความมั่นใจถูกปรับเทียบด้วย temperature scaling ถ้าต่ำกว่าเกณฑ์ ระบบจะบอกว่าไม่แน่ใจแทนการเดา</p></div>
+    </div>
+  </section>
+
+  <section id="model">
+    <h2 class="sec">ผลทดสอบของโมเดลนี้</h2>
+    <p class="sec" id="modelLine">กำลังโหลดข้อมูลโมเดล</p>
+    <div class="stats" id="stats"></div>
+    <div class="card limits">
+      <h3>ข้อจำกัดที่ต้องรู้</h3>
+      <p>ภาพรอยโรคสารหนูทั้งหมดในชุดข้อมูลฝึกมาจากบังกลาเทศ ถ่ายด้วยโทรศัพท์เครื่องเดียวในวันเดียว โมเดลจึงอาจจำลักษณะของกล้องและแสงในวันนั้นได้ด้วย ตัวเลขความแม่นยำบนชุดทดสอบจากแหล่งเดียวกันจึงสูงกว่าที่จะเกิดจริงในพื้นที่</p>
+      <p>ตัวเลขที่ใกล้ความจริงกว่าคืออัตราตอบผิดว่าเป็นสารหนูกับภาพโรคผิวหนังอื่นจาก Fitzpatrick17k ซึ่งโมเดลไม่เคยเห็นตอนฝึก ยังไม่มีการทดสอบกับภาพผู้ป่วยไทยจริง</p>
+      <p>เครื่องมือนี้เป็นต้นแบบเพื่อการศึกษา ใช้คัดกรองเบื้องต้นเท่านั้น ไม่ใช่การวินิจฉัย ผลทุกแบบควรยืนยันโดยแพทย์ ร่วมกับการตรวจปริมาณสารหนูในน้ำดื่มและในปัสสาวะ</p>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap">
+  <p><b>ส่องหนู SongNoo</b> ต้นแบบนวัตกรรมโดยนักเรียนโรงเรียนวิทยาศาสตร์จุฬาภรณราชวิทยาลัย สตูล</p>
+  <p>ข้อมูลฝึก ArsenicSkinImageBD จาก Mendeley Data สัญญาอนุญาต CC BY 4.0 · SCIN จาก Google Research · DermaCon-IN จาก Harvard Dataverse สัญญาอนุญาต CC BY-NC-SA 4.0 · ชุดทดสอบภายนอก Fitzpatrick17k</p>
+  <p>โมเดล EfficientNet-B0 รันในเบราว์เซอร์ด้วย ONNX Runtime Web</p>
+</footer>
+
+<script src="ort.wasm.min.js"></script>
+<script>
+{
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pct=(x,d=0)=>(100*x).toFixed(d)+"%";
+const NAMES={healthy:"ผิวปกติ",arsenic:"รอยโรคจากสารหนู",other:"โรคผิวหนังอื่น"};
+const COLORS={healthy:"var(--green)",arsenic:"var(--coral)",other:"var(--amber)"};
+let meta=null,sess=null,current=null,history=[];
+
+const root=document.documentElement;
+$("#themeBtn").addEventListener("click",()=>{
+  const dark=root.dataset.theme?root.dataset.theme==="dark":matchMedia("(prefers-color-scheme: dark)").matches;
+  root.dataset.theme=dark?"light":"dark";
+  try{localStorage.setItem("songnoo-theme",root.dataset.theme)}catch(e){}
+});
+try{const t=localStorage.getItem("songnoo-theme");if(t)root.dataset.theme=t}catch(e){}
+
+function setStatus(cls,txt){const s=$("#status");s.className="pill "+cls;s.querySelector(".txt").textContent=txt}
+
+async function fetchWithProgress(url,onp){
+  const r=await fetch(url);if(!r.ok)throw new Error(url+" "+r.status);
+  const total=+r.headers.get("content-length")||0;
+  if(!r.body||!total)return new Uint8Array(await r.arrayBuffer());
+  const rd=r.body.getReader(),buf=new Uint8Array(total);let got=0;
+  for(;;){const {done,value}=await rd.read();if(done)break;buf.set(value,got);got+=value.length;onp(got/total)}
+  return buf;
+}
+
+async function init(){
+  try{
+    meta=await (await fetch("meta.json")).json();
+    renderModel();renderSamples();
+    ort.env.wasm.numThreads=1;
+    ort.env.wasm.wasmPaths=new URL("./",location.href).href;
+    let bytes;
+    try{bytes=await fetchWithProgress("model.onnx",p=>setStatus("st-load","กำลังโหลด AI "+Math.round(100*p)+"%"))}
+    catch(e){const prog=[0,0],parts=await Promise.all([0,1].map(i=>fetchWithProgress("model-"+i+".json",p=>{prog[i]=p;setStatus("st-load","กำลังโหลด AI "+Math.round(50*(prog[0]+prog[1]))+"%")})));
+      const bins=parts.map(r=>atob(JSON.parse(new TextDecoder().decode(r)).data));bytes=new Uint8Array(bins[0].length+bins[1].length);
+      let o=0;for(const bn of bins)for(let i=0;i<bn.length;i++)bytes[o++]=bn.charCodeAt(i)}
+    sess=await ort.InferenceSession.create(bytes,{executionProviders:["wasm"],graphOptimizationLevel:"all"});
+    setStatus(meta.demo?"st-load":"st-ok",meta.demo?"โหมดสาธิต":"AI พร้อมใช้งาน");if(meta.demo){$("#status").querySelector("i").style.animation="none";$("#demo").classList.remove("hide")}
+    if(current&&!current.res)analyze(current);
+  }catch(e){
+    console.error(e);setStatus("st-err","โหลด AI ไม่สำเร็จ");
+    $("#modelLine").textContent="โหลดโมเดลไม่สำเร็จ ลองรีเฟรชหน้าอีกครั้ง";
+  }
+}
+
+function renderModel(){
+  const m=meta.metrics||{},bd=m.bd_test,ext=m.external||[];
+  const how=/frozen/.test(m.method||"")?" ใช้ลักษณะภาพจาก ImageNet แล้วฝึกชั้นตัดสินสุดท้าย":" ฝึกทั้งโมเดล";
+  const nt=m.n_train?Object.values(m.n_train).reduce((a,b)=>a+b,0):0;
+  if(m.source==="experiment_B2")$("#modelLine").textContent="ตัวเลขด้านล่างมาจากการทดลอง B2 ที่ฝึก EfficientNet-B0 ทั้งโมเดลใน Colab ยังไม่ใช่โมเดลที่รันอยู่ในหน้านี้";else
+  $("#modelLine").textContent="EfficientNet-B0"+how+(nt?" จากภาพฝึก "+nt.toLocaleString()+" ภาพ":"")+" อัปเดต "+meta.version+" ระบบจะตอบว่าไม่แน่ใจเมื่อความมั่นใจต่ำกว่า "+pct(meta.tau);
+  const fz=g=>ext.find(r=>r.source==="Fitzpatrick17k"&&r.group===g);
+  const ci=(lo,hi)=>lo==null?(m.source==="experiment_B2"?"ผลการทดลอง B2 ใน Colab":""):"ช่วงเชื่อมั่น 95% "+pct(lo)+" ถึง "+pct(hi);
+  const cards=[];
+  if(bd){
+    cards.push(["ความไว",pct(bd.sens,1),"จับรอยโรคสารหนูได้ ชุดทดสอบ BD",ci(...(bd.sens_ci||[]))]);
+    cards.push(["ความจำเพาะ",pct(bd.spec,1),"ไม่ทักผิวปกติผิด ชุดทดสอบ BD",ci(...(bd.spec_ci||[]))]);
+  }
+  const L=fz("lookalike"),C=fz("control");
+  if(L)cards.push(["ทักผิดกับโรคหน้าคล้าย",pct(L.rate,1),"Fitzpatrick17k"+(L.n?" จำนวน "+L.n+" ภาพ":""),ci(L.lo,L.hi)]);
+  if(C)cards.push(["ทักผิดกับโรคทั่วไป",pct(C.rate,1),"Fitzpatrick17k"+(C.n?" จำนวน "+C.n+" ภาพ":""),ci(C.lo,C.hi)]);
+  const D=m.dermacon_test;if(D)cards.push(["ทักผิดกับโรคผิวอื่น",pct(D.rate,1),"DermaCon-IN ชุดทดสอบ "+D.n+" ภาพ",ci(...(D.ci||[]))]);
+  $("#stats").innerHTML=cards.length?cards.map(c=>`<div class="card stat"><span>${esc(c[0])}</span><b>${esc(c[1])}</b><span>${esc(c[2])}</span><em>${esc(c[3])}</em></div>`).join(""):"";
+}
+
+function renderSamples(){
+  const s=meta.samples||[];if(!s.length)return;
+  const box=$("#samples");box.classList.remove("hide");
+  const cnt={};box.insertAdjacentHTML("beforeend",s.map((x,i)=>{cnt[x.label]=(cnt[x.label]||0)+1;return `<button data-i="${i}"><img src="${esc(x.file)}" alt=""> ${esc(x.label.replace("ตัวอย่าง",""))} ${cnt[x.label]}</button>`}).join(""));
+  box.addEventListener("click",async e=>{const b=e.target.closest("button");if(!b)return;
+    const x=s[+b.dataset.i];const blob=await (await fetch(x.file)).blob();handleFile(new File([blob],x.file,{type:blob.type}))});
+}
+
+const drop=$("#drop"),file=$("#file");
+file.addEventListener("change",()=>{if(file.files[0])handleFile(file.files[0]);file.value=""});
+["dragenter","dragover"].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add("over")}));
+["dragleave","drop"].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.remove("over")}));
+drop.addEventListener("drop",e=>{const f=[...e.dataTransfer.files].find(f=>f.type.startsWith("image/"));if(f)handleFile(f)});
+document.addEventListener("paste",e=>{const it=[...(e.clipboardData?.items||[])].find(i=>i.type.startsWith("image/"));if(it)handleFile(it.getAsFile())});
+
+async function handleFile(f){
+  let bmp;
+  try{bmp=await createImageBitmap(f)}catch(e){
+    $("#res").classList.remove("hide");
+    $("#verdict").innerHTML=`<div class="empty">เปิดไฟล์นี้ไม่ได้ ถ้าเป็นไฟล์ HEIC จาก iPhone ให้ตั้งกล้องเป็น "เข้ากันได้มากที่สุด" หรือส่งเป็น JPG</div>`;return}
+  const thumb=document.createElement("canvas");thumb.width=thumb.height=160;
+  thumb.getContext("2d").drawImage(bmp,0,0,160,160);
+  const item={bmp,name:f.name,thumb:thumb.toDataURL("image/jpeg",.7),res:null};
+  history.unshift(item);if(history.length>8)history.pop();
+  show(item);
+  if(sess)analyze(item);
+}
+
+function drawPhoto(item){
+  const c=$("#img"),w=item.bmp.width,h=item.bmp.height;
+  $("#stage").style.aspectRatio=w+"/"+h;
+  const W=Math.min(900,w),H=Math.round(W*h/w);c.width=W;c.height=H;
+  c.getContext("2d").drawImage(item.bmp,0,0,W,H);
+  $("#heat").getContext("2d").clearRect(0,0,$("#heat").width,$("#heat").height);
+}
+
+function show(item){
+  current=item;$("#res").classList.remove("hide");drawPhoto(item);
+  if(item.res)renderResult(item);else{$("#stage").classList.add("busy");$("#verdict").innerHTML=`<div class="empty">${sess?"กำลังวิเคราะห์":"กำลังโหลด AI ระบบจะวิเคราะห์ให้อัตโนมัติ"}</div>`;$("#qc").innerHTML=""}
+  renderHist();
+  $("#res").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
+}
+
+function renderHist(){
+  $("#hist").innerHTML=history.length>1?history.map((h,i)=>`<button data-i="${i}" aria-pressed="${h===current}" style="${h===current?"border-color:var(--teal)":""}"><img src="${h.thumb}" alt="">${h.res?esc(NAMES[h.res.label]):"รอผล"}</button>`).join(""):"";
+}
+$("#hist").addEventListener("click",e=>{const b=e.target.closest("button");if(b)show(history[+b.dataset.i])});
+
+function preprocess(bmp){
+  const S=meta.img_size,a=document.createElement("canvas");a.width=a.height=320;
+  const ax=a.getContext("2d");ax.imageSmoothingQuality="high";ax.drawImage(bmp,0,0,320,320);
+  const b=document.createElement("canvas");b.width=b.height=S;
+  const bx=b.getContext("2d",{willReadFrequently:true});bx.imageSmoothingQuality="high";bx.drawImage(a,0,0,S,S);
+  const px=bx.getImageData(0,0,S,S).data,n=S*S,x=new Float32Array(3*n),gray=new Float32Array(n);
+  let lum=0;
+  for(let i=0;i<n;i++){
+    const r=px[4*i]/255,g=px[4*i+1]/255,bl=px[4*i+2]/255;
+    x[i]=(r-meta.mean[0])/meta.std[0];x[n+i]=(g-meta.mean[1])/meta.std[1];x[2*n+i]=(bl-meta.mean[2])/meta.std[2];
+    gray[i]=255*(0.299*r+0.587*g+0.114*bl);lum+=gray[i];
+  }
+  let s=0,s2=0,m=0;
+  for(let yy=1;yy<S-1;yy++)for(let xx=1;xx<S-1;xx++){const i=yy*S+xx;const l=gray[i-1]+gray[i+1]+gray[i-S]+gray[i+S]-4*gray[i];s+=l;s2+=l*l;m++}
+  return {x,lum:lum/n,sharp:s2/m-(s/m)**2};
+}
+
+async function analyze(item){
+  const t0=performance.now();
+  const {x,lum,sharp}=preprocess(item.bmp);
+  const S=meta.img_size;
+  const out=await sess.run({input:new ort.Tensor("float32",x,[1,3,S,S])});
+  const logits=[...out.logits.data],F=out.features,[_,Cn,Hh,Ww]=F.dims,fd=F.data;
+  const z=logits.map(v=>v/meta.temperature),mx=Math.max(...z),ex=z.map(v=>Math.exp(v-mx)),sum=ex.reduce((a,b)=>a+b);
+  const p=ex.map(v=>v/sum),top=p.indexOf(Math.max(...p)),label=meta.classes[top];
+  const target=label==="healthy"?meta.classes.indexOf("arsenic"):top;
+  const Wt=meta.classifier_weight[target],cam=new Float32Array(Hh*Ww);
+  for(let c=0;c<Cn;c++){const w=Wt[c];if(!w)continue;const o=c*Hh*Ww;for(let k=0;k<Hh*Ww;k++)cam[k]+=w*fd[o+k]}
+  item.res={p,label,conf:p[top],cam,camTarget:meta.classes[target],Hh,Ww,lum,sharp,short:Math.min(item.bmp.width,item.bmp.height),ms:Math.round(performance.now()-t0)};
+  if(current===item)renderResult(item);
+  renderHist();
+}
+
+function colormap(t){
+  const stops=[[43,131,186],[171,221,164],[253,174,97],[215,25,28]];
+  const u=Math.min(.999,Math.max(0,t))*(stops.length-1),i=Math.floor(u),f=u-i;
+  return stops[i].map((v,k)=>Math.round(v+(stops[i+1][k]-v)*f));
+}
+
+function drawCam(item){
+  const r=item.res,hc=$("#heat"),img=$("#img");hc.width=img.width;hc.height=img.height;
+  const small=document.createElement("canvas");small.width=r.Ww;small.height=r.Hh;
+  const sx=small.getContext("2d"),id=sx.createImageData(r.Ww,r.Hh);
+  let lo=Infinity,hi=-Infinity;for(const v of r.cam){lo=Math.min(lo,v);hi=Math.max(hi,v)}
+  r.cam.forEach((v,k)=>{const t=hi>lo?(v-lo)/(hi-lo):0,[R,G,B]=colormap(t);id.data.set([R,G,B,Math.round(70+150*t)],4*k)});
+  sx.putImageData(id,0,0);
+  const hx=hc.getContext("2d");hx.imageSmoothingEnabled=true;hx.imageSmoothingQuality="high";
+  hx.clearRect(0,0,hc.width,hc.height);hx.globalAlpha=.75;hx.drawImage(small,0,0,hc.width,hc.height);
+  hc.style.opacity=$("#camT").checked?1:0;
+}
+$("#camT").addEventListener("change",()=>{$("#heat").style.opacity=$("#camT").checked?1:0});
+
+function renderResult(item){
+  const r=item.res;$("#stage").classList.remove("busy");drawCam(item);
+  const q=[];
+  q.push(r.short<300?["warn","ภาพเล็ก "+r.short+" px ควรถ่ายใหม่ให้ใกล้ขึ้น"]:["ok","ขนาดภาพพอใช้"]);
+  q.push(r.lum<55?["warn","ภาพมืดเกินไป"]:r.lum>215?["warn","ภาพสว่างจ้าเกินไป"]:["ok","แสงพอดี"]);
+  q.push(r.sharp<40?["warn","ภาพอาจเบลอ"]:["ok","ภาพคมชัด"]);
+  $("#qc").innerHTML=q.map(([c,t])=>`<span class="${c}">${esc(t)}</span>`).join("");
+  const ar=r.p[meta.classes.indexOf("arsenic")],unsure=r.conf<meta.tau,poor=q.some(x=>x[0]==="warn");
+  let tier,small,title,body,adv;
+  if(unsure){tier="t-grey";small="ไม่แน่ใจ";title="AI ยังตัดสินไม่ได้";
+    body="ความมั่นใจสูงสุดอยู่ที่ "+pct(r.conf)+" ต่ำกว่าเกณฑ์ "+pct(meta.tau)+" ลองถ่ายใหม่ให้ใกล้และชัดขึ้น";
+    adv="ถ้าถ่ายใหม่แล้วยังไม่แน่ใจ และมีประวัติใช้น้ำในพื้นที่เสี่ยง ควรให้แพทย์หรือเจ้าหน้าที่ รพ.สต. ดูรอยโรคโดยตรง";}
+  else if(r.label==="arsenic"){tier="t-red";small="ควรพบแพทย์";title="พบลักษณะที่เข้าได้กับรอยโรคจากสารหนู";
+    body="AI ให้ความน่าจะเป็น "+pct(ar)+" ว่าเป็นรอยโรคจากสารหนู";
+    adv="<b>ขั้นต่อไป</b> นำรูปนี้ไปพบแพทย์หรือ รพ.สต. ใกล้บ้าน แจ้งแหล่งน้ำที่ใช้ดื่มและทำอาหาร และขอตรวจสารหนูในปัสสาวะ ระหว่างนี้งดใช้น้ำจากแหล่งที่สงสัย";}
+  else if(r.label==="other"){tier="t-amber";small="ไม่ใช่ลักษณะสารหนูที่ชัด";title="ลักษณะคล้ายโรคผิวหนังชนิดอื่น";
+    body="AI คิดว่าน่าจะเป็นโรคผิวหนังอื่น เช่น หนังด้าน หูด เชื้อรา หรือผื่นอักเสบ ความน่าจะเป็นที่เป็นสารหนู "+pct(ar);
+    adv="ถ้ารอยโรคไม่หายใน 2 ถึง 4 สัปดาห์ หรือมีหลายจุดที่ฝ่ามือฝ่าเท้า ควรพบแพทย์ ผลนี้ไม่ได้ตัดโอกาสสัมผัสสารหนูออก ถ้าใช้น้ำในพื้นที่เสี่ยง";}
+  else{tier="t-green";small="ไม่พบรอยโรคชัดเจน";title="ผิวดูปกติในรูปนี้";
+    body="AI ไม่พบลักษณะผิดปกติที่ชัดเจน ความน่าจะเป็นที่เป็นสารหนู "+pct(ar);
+    adv="รอยโรคจากสารหนูมักขึ้นที่ฝ่ามือฝ่าเท้าทั้งสองข้าง ถ้าใช้น้ำในพื้นที่เสี่ยง ลองถ่ายทั้งสองมือและสองเท้าแยกกัน และตรวจคุณภาพน้ำร่วมด้วย";}
+  if(poor&&!unsure)adv+=" คุณภาพรูปมีข้อควรระวัง ผลอาจคลาดเคลื่อน";
+  const order=["arsenic","other","healthy"];
+  if(meta.demo)small="ผลจำลอง "+small;
+  $("#verdict").innerHTML=`<div class="tier ${tier}"><small>${esc(small)}</small><h2>${esc(title)}</h2><p>${esc(body)}</p></div>
+  <div class="bars">${order.map(k=>{const v=r.p[meta.classes.indexOf(k)];return `<div class="bar-row"><span>${esc(NAMES[k])}</span><div class="track"><div class="fill" style="width:${(100*v).toFixed(1)}%;background:${COLORS[k]}"></div></div><b>${pct(v)}</b></div>`}).join("")}</div>
+  <div class="advice">${adv}<br><br>จุดสีแดงบนภาพคือบริเวณที่ทำให้ AI คิดว่าเป็น${esc(NAMES[r.camTarget])} วิเคราะห์ในเครื่องนี้ใช้เวลา ${r.ms} มิลลิวินาที ผลนี้ใช้คัดกรองเท่านั้น ไม่ใช่การวินิจฉัย</div>`;
+}
+
+const QS=[["water","ใช้น้ำบ่อตื้น น้ำบาดาล หรือน้ำจากแม่น้ำกก สาย รวก ดื่มหรือทำอาหาร"],["years","ใช้น้ำแหล่งนั้นต่อเนื่องมาหลายปี"],["palm","มีตุ่มหนาแข็งหลายจุดที่ฝ่ามือหรือฝ่าเท้าทั้งสองข้าง"],["spots","มีจุดด่างดำปนจุดขาวกระจายบนลำตัว"],["family","คนในบ้านมีอาการผิวหนังคล้ายกัน"]];
+const ans={};
+$("#qs").innerHTML=QS.map(([k,t])=>`<div class="q"><span>${t}</span><div class="yn" data-k="${k}"><button aria-pressed="false" data-v="1">ใช่</button><button aria-pressed="false" data-v="0">ไม่ใช่</button></div></div>`).join("");
+$("#qs").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const g=b.parentElement;
+  g.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b));ans[g.dataset.k]=+b.dataset.v;risk()});
+function risk(){
+  const n=Object.keys(ans).length;if(!n)return;
+  const exp=ans.water&&ans.years,sign=(ans.palm||0)+(ans.spots||0)+(ans.family||0);
+  let t;
+  if(exp&&sign>=1)t="มีทั้งประวัติใช้น้ำเสี่ยงต่อเนื่องและอาการที่เข้าได้ ควรพบแพทย์และขอตรวจสารหนูในปัสสาวะ แม้ผล AI จะไม่ชี้ว่าเป็นสารหนูก็ตาม";
+  else if(exp)t="มีประวัติใช้น้ำเสี่ยงต่อเนื่อง ควรตรวจคุณภาพน้ำที่ใช้ และหมั่นสังเกตฝ่ามือฝ่าเท้า";
+  else if(ans.water)t="เคยใช้น้ำจากแหล่งที่อาจมีสารหนู ควรตรวจคุณภาพน้ำ รอยโรคผิวหนังมักเกิดหลังสัมผัสต่อเนื่องเป็นเวลานาน";
+  else if(sign>=1)t="มีอาการทางผิวหนัง แต่ไม่มีประวัติใช้น้ำเสี่ยง โอกาสเป็นโรคผิวหนังชนิดอื่นจะสูงกว่า ควรให้แพทย์ประเมิน";
+  else t="ไม่พบปัจจัยเสี่ยงจากคำตอบ";
+  $("#riskOut").textContent="ตอบแล้ว "+n+" จาก "+QS.length+" ข้อ "+t;
+}
+
+init();
+}
+</script>
+</body>
+</html>
