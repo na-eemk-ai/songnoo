@@ -90,7 +90,12 @@ section{padding:28px 0}
 .t-green{background:var(--greenbg);color:var(--green)}.t-grey{background:var(--greybg);color:var(--grey)}
 .tier p,.tier h2{color:var(--ink)}
 .bars{display:grid;gap:12px;margin:6px 0 18px}
-.bar-row{display:grid;grid-template-columns:9.5em minmax(0,1fr) 3.6em;gap:10px;align-items:center;font-size:15px}
+.cropbox{position:absolute;border:3px solid #fff;border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.45);touch-action:none;cursor:move}
+.cropbox i{position:absolute;right:-14px;bottom:-14px;width:30px;height:30px;border-radius:50%;background:var(--teal);border:3px solid #fff;cursor:nwse-resize;touch-action:none}
+.croprow{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:12px;font-size:15px;color:var(--mute)}
+.seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}.seg i{height:12px;border-radius:6px;background:var(--greybg)}
+.note{font-size:14px;color:var(--mute);margin:-6px 0 14px}
+.bar-row{display:grid;grid-template-columns:9.5em minmax(0,1fr) 7.2em;gap:10px;align-items:center;font-size:15px}
 .bar-row .track{height:12px;border-radius:6px;background:var(--greybg);overflow:hidden}
 .bar-row .fill{height:100%;border-radius:6px;transition:width .6s}
 .bar-row b{text-align:right;font-variant-numeric:tabular-nums}
@@ -125,7 +130,7 @@ footer{padding:34px 0 48px;color:var(--mute);font-size:14px;text-align:center}
 footer p{max-width:720px;margin:6px auto}
 .hide{display:none!important}
 @media(max-width:860px){.result{grid-template-columns:minmax(0,1fr)}.tips{grid-template-columns:repeat(2,minmax(0,1fr))}.feat{grid-template-columns:minmax(0,1fr)}}
-@media(max-width:600px){body{font-size:17px}.bar{height:60px}.logo small{display:none}.hero{padding:28px 0 18px}.hero p{font-size:16px}.drop{padding:26px 16px}.verdict{padding:18px}.tier{padding:16px}.advice{font-size:16px}.tip{font-size:15px}.feat p,.limits p{font-size:16px}.stat span,.stat em{font-size:14px}.pill .txt{display:none}.pill{padding:10px}.bar-row{grid-template-columns:7.6em minmax(0,1fr) 3.2em;font-size:14px}.q{flex-direction:column;align-items:flex-start}}
+@media(max-width:600px){body{font-size:17px}.bar{height:60px}.logo small{display:none}.hero{padding:28px 0 18px}.hero p{font-size:16px}.drop{padding:26px 16px}.verdict{padding:18px}.tier{padding:16px}.advice{font-size:16px}.tip{font-size:15px}.feat p,.limits p{font-size:16px}.stat span,.stat em{font-size:14px}.pill .txt{display:none}.pill{padding:10px}.bar-row{grid-template-columns:6.8em minmax(0,1fr) 6.6em;font-size:14px}.q{flex-direction:column;align-items:flex-start}}
 </style>
 </head>
 <body>
@@ -164,15 +169,16 @@ footer p{max-width:720px;margin:6px auto}
     <div class="tip"><b>ระยะใกล้</b>ให้รอยโรคเต็มกรอบประมาณครึ่งภาพ</div>
     <div class="tip"><b>แสงธรรมชาติ</b>ไม่ใช้แฟลช ไม่ย้อนแสง</div>
     <div class="tip"><b>ภาพคมชัด</b>แตะโฟกัสก่อนถ่าย มือไม่สั่น</div>
-    <div class="tip"><b>ทีละจุด</b>ฝ่ามือ ฝ่าเท้า หรือลำตัว แยกรูปกัน</div>
+    <div class="tip"><b>ครอบเฉพาะผิว</b>ลากกรอบให้เหลือแต่รอยโรค ไม่ติดผ้าหรือพื้นหลัง</div>
   </div>
 
   <section id="res" class="hide" aria-live="polite">
     <div class="result">
       <div class="card photo">
-        <div class="stage" id="stage"><canvas id="img"></canvas><canvas id="heat"></canvas><div class="scan"></div></div>
+        <div class="stage" id="stage"><canvas id="img"></canvas><canvas id="heat"></canvas><div class="cropbox hide" id="cropbox"><i id="handle"></i></div><div class="scan"></div></div>
+        <div class="croprow hide" id="croprow"><span>ลากกรอบให้ครอบรอยโรค ลากวงกลมมุมขวาล่างเพื่อย่อขยาย</span><button class="btn" id="goBtn">วิเคราะห์บริเวณนี้</button></div>
         <div class="row">
-          <label class="switch"><input type="checkbox" id="camT" checked> แสดงจุดที่ AI ให้น้ำหนัก</label>
+          <label class="switch"><input type="checkbox" id="camT" checked> แสดงจุดที่ AI ให้น้ำหนัก</label><button class="btn ghost" id="recrop">เลือกบริเวณใหม่</button>
           <span class="legend">น้อย <i></i> มาก</span>
         </div>
         <div class="qc" id="qc"></div>
@@ -260,7 +266,7 @@ async function init(){
       let o=0;for(const bn of bins)for(let i=0;i<bn.length;i++)bytes[o++]=bn.charCodeAt(i)}
     sess=await ort.InferenceSession.create(bytes,{executionProviders:["wasm"],graphOptimizationLevel:"all"});
     setStatus(meta.demo?"st-load":"st-ok",meta.demo?"โหมดสาธิต":"AI พร้อมใช้งาน");if(meta.demo){$("#status").querySelector("i").style.animation="none";$("#demo").classList.remove("hide")}
-    if(current&&!current.res)analyze(current);
+    if(current&&!current.res&&!current.busy)enterCrop(current);
   }catch(e){
     console.error(e);setStatus("st-err","โหลด AI ไม่สำเร็จ");
     $("#modelLine").textContent="โหลดโมเดลไม่สำเร็จ ลองรีเฟรชหน้าอีกครั้ง";
@@ -269,7 +275,7 @@ async function init(){
 
 function renderModel(){
   const m=meta.metrics||{},bd=m.bd_test,ext=m.external||[];
-  const how=/frozen/.test(m.method||"")?" ใช้ลักษณะภาพจาก ImageNet แล้วฝึกชั้นตัดสินสุดท้าย":" ฝึกทั้งโมเดล";
+  const how=(/frozen/.test(m.method||"")?" ใช้ลักษณะภาพจาก ImageNet แล้วฝึกชั้นตัดสินสุดท้าย":" ฝึกทั้งโมเดล")+(/crop/.test(m.method||"")?" ด้วยภาพที่ครอปเฉพาะผิว":"");
   const nt=m.n_train?Object.values(m.n_train).reduce((a,b)=>a+b,0):0;
   if(m.source==="experiment_B2")$("#modelLine").textContent="ตัวเลขด้านล่างมาจากการทดลอง B2 ที่ฝึก EfficientNet-B0 ทั้งโมเดลใน Colab ยังไม่ใช่โมเดลที่รันอยู่ในหน้านี้";else
   $("#modelLine").textContent="EfficientNet-B0"+how+(nt?" จากภาพฝึก "+nt.toLocaleString()+" ภาพ":"")+" อัปเดต "+meta.version+" ระบบจะตอบว่าไม่แน่ใจเมื่อความมั่นใจต่ำกว่า "+pct(meta.tau);
@@ -283,6 +289,7 @@ function renderModel(){
   const L=fz("lookalike"),C=fz("control");
   if(L)cards.push(["ทักผิดกับโรคหน้าคล้าย",pct(L.rate,1),"Fitzpatrick17k"+(L.n?" จำนวน "+L.n+" ภาพ":""),ci(L.lo,L.hi)]);
   if(C)cards.push(["ทักผิดกับโรคทั่วไป",pct(C.rate,1),"Fitzpatrick17k"+(C.n?" จำนวน "+C.n+" ภาพ":""),ci(C.lo,C.hi)]);
+  const K=m.calibration;if(K)cards.push(["ความคลาดของความมั่นใจ",K.ece_fz_after.toFixed(2),"ECE บนภาพ Fitzpatrick17k ที่ไม่เคยใช้ฝึก ยิ่งต่ำยิ่งดี","ผลที่มั่นใจ 99% ขึ้นไปมีแค่ "+pct(K.share_conf_ge_099_after)+" ของชุดทดสอบ"]);
   const D=m.dermacon_test;if(D)cards.push(["ทักผิดกับโรคผิวอื่น",pct(D.rate,1),"DermaCon-IN ชุดทดสอบ "+D.n+" ภาพ",ci(...(D.ci||[]))]);
   $("#stats").innerHTML=cards.length?cards.map(c=>`<div class="card stat"><span>${esc(c[0])}</span><b>${esc(c[1])}</b><span>${esc(c[2])}</span><em>${esc(c[3])}</em></div>`).join(""):"";
 }
@@ -309,23 +316,24 @@ async function handleFile(f){
     $("#verdict").innerHTML=`<div class="empty">เปิดไฟล์นี้ไม่ได้ ถ้าเป็นไฟล์ HEIC จาก iPhone ให้ตั้งกล้องเป็น "เข้ากันได้มากที่สุด" หรือส่งเป็น JPG</div>`;return}
   const thumb=document.createElement("canvas");thumb.width=thumb.height=160;
   thumb.getContext("2d").drawImage(bmp,0,0,160,160);
-  const item={bmp,name:f.name,thumb:thumb.toDataURL("image/jpeg",.7),res:null};
+  const S0=Math.round((meta.crop_default||0.65)*Math.min(bmp.width,bmp.height));
+  const item={bmp,name:f.name,thumb:thumb.toDataURL("image/jpeg",.7),res:null,box:{x:Math.round((bmp.width-S0)/2),y:Math.round((bmp.height-S0)/2),s:S0}};
   history.unshift(item);if(history.length>8)history.pop();
   show(item);
-  if(sess)analyze(item);
 }
 
-function drawPhoto(item){
-  const c=$("#img"),w=item.bmp.width,h=item.bmp.height;
-  $("#stage").style.aspectRatio=w+"/"+h;
+function drawPhoto(item,cropped){
+  const c=$("#img"),w=item.bmp.width,h=item.bmp.height,b=item.box;
+  if(cropped){$("#stage").style.aspectRatio="1/1";c.width=c.height=640;c.getContext("2d").drawImage(item.bmp,b.x,b.y,b.s,b.s,0,0,640,640)}
+  else{$("#stage").style.aspectRatio=w+"/"+h;
   const W=Math.min(900,w),H=Math.round(W*h/w);c.width=W;c.height=H;
-  c.getContext("2d").drawImage(item.bmp,0,0,W,H);
+  c.getContext("2d").drawImage(item.bmp,0,0,W,H)}
   $("#heat").getContext("2d").clearRect(0,0,$("#heat").width,$("#heat").height);
 }
 
 function show(item){
-  current=item;$("#res").classList.remove("hide");drawPhoto(item);
-  if(item.res)renderResult(item);else{$("#stage").classList.add("busy");$("#verdict").innerHTML=`<div class="empty">${sess?"กำลังวิเคราะห์":"กำลังโหลด AI ระบบจะวิเคราะห์ให้อัตโนมัติ"}</div>`;$("#qc").innerHTML=""}
+  current=item;$("#res").classList.remove("hide");
+  if(item.res)renderResult(item);else if(!item.busy)enterCrop(item);else{drawPhoto(item,true);$("#stage").classList.add("busy");$("#verdict").innerHTML=`<div class="empty">${sess?"กำลังวิเคราะห์":"กำลังโหลด AI ระบบจะวิเคราะห์ให้อัตโนมัติ"}</div>`;$("#qc").innerHTML=""}
   renderHist();
   $("#res").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
 }
@@ -335,9 +343,40 @@ function renderHist(){
 }
 $("#hist").addEventListener("click",e=>{const b=e.target.closest("button");if(b)show(history[+b.dataset.i])});
 
-function preprocess(bmp){
+function placeBox(){
+  const it=current,b=it.box,cb=$("#cropbox"),W=it.bmp.width,H=it.bmp.height;
+  cb.style.left=(100*b.x/W)+"%";cb.style.top=(100*b.y/H)+"%";cb.style.width=(100*b.s/W)+"%";cb.style.height=(100*b.s/H)+"%";
+}
+function enterCrop(item){
+  drawPhoto(item,false);$("#stage").classList.remove("busy");$("#heat").style.opacity=0;
+  $("#cropbox").classList.remove("hide");$("#croprow").classList.remove("hide");$("#recrop").classList.add("hide");$("#qc").innerHTML="";
+  placeBox();
+  $("#verdict").innerHTML=`<div class="empty">ลากกรอบบนรูปให้ครอบเฉพาะบริเวณรอยโรค ไม่ให้ติดผ้า พื้นหลัง หรือแถบสีดำ แล้วกด วิเคราะห์บริเวณนี้<br><br>${sess?"":"กำลังโหลด AI รอสักครู่"}</div>`;
+}
+{
+  let drag=null;
+  const start=(e,mode)=>{e.preventDefault();e.stopPropagation();const it=current;if(!it)return;
+    drag={mode,x0:e.clientX,y0:e.clientY,b:{...it.box},k:it.bmp.width/$("#stage").clientWidth};
+    e.target.setPointerCapture&&e.target.setPointerCapture(e.pointerId)};
+  $("#cropbox").addEventListener("pointerdown",e=>start(e,e.target.id==="handle"?"size":"move"));
+  window.addEventListener("pointermove",e=>{if(!drag)return;const it=current,W=it.bmp.width,H=it.bmp.height,d=drag;
+    const dx=(e.clientX-d.x0)*d.k,dy=(e.clientY-d.y0)*d.k,b=it.box,mn=Math.round(0.15*Math.min(W,H));
+    if(d.mode==="move"){b.x=Math.round(Math.min(Math.max(0,d.b.x+dx),W-b.s));b.y=Math.round(Math.min(Math.max(0,d.b.y+dy),H-b.s))}
+    else{b.s=Math.round(Math.min(Math.max(mn,d.b.s+Math.max(dx,dy)),W-b.x,H-b.y))}
+    placeBox()});
+  window.addEventListener("pointerup",()=>{drag=null});
+}
+$("#goBtn").addEventListener("click",()=>{const it=current;if(!it)return;
+  if(!sess){$("#verdict").innerHTML=`<div class="empty">กำลังโหลด AI รอสักครู่แล้วกดอีกครั้ง</div>`;return}
+  $("#cropbox").classList.add("hide");$("#croprow").classList.add("hide");it.busy=true;drawPhoto(it,true);$("#stage").classList.add("busy");
+  $("#verdict").innerHTML=`<div class="empty">กำลังวิเคราะห์</div>`;
+  const t=document.createElement("canvas");t.width=t.height=160;t.getContext("2d").drawImage(it.bmp,it.box.x,it.box.y,it.box.s,it.box.s,0,0,160,160);it.thumb=t.toDataURL("image/jpeg",.7);
+  analyze(it)});
+$("#recrop").addEventListener("click",()=>{const it=current;if(!it)return;it.res=null;it.busy=false;enterCrop(it);renderHist()});
+
+function preprocess(item){const bmp=item.bmp,bx0=item.box;
   const S=meta.img_size,a=document.createElement("canvas");a.width=a.height=320;
-  const ax=a.getContext("2d");ax.imageSmoothingQuality="high";ax.drawImage(bmp,0,0,320,320);
+  const ax=a.getContext("2d");ax.imageSmoothingQuality="high";ax.drawImage(bmp,bx0.x,bx0.y,bx0.s,bx0.s,0,0,320,320);
   const b=document.createElement("canvas");b.width=b.height=S;
   const bx=b.getContext("2d",{willReadFrequently:true});bx.imageSmoothingQuality="high";bx.drawImage(a,0,0,S,S);
   const px=bx.getImageData(0,0,S,S).data,n=S*S,x=new Float32Array(3*n),gray=new Float32Array(n);
@@ -354,7 +393,7 @@ function preprocess(bmp){
 
 async function analyze(item){
   const t0=performance.now();
-  const {x,lum,sharp}=preprocess(item.bmp);
+  const {x,lum,sharp}=preprocess(item);
   const S=meta.img_size;
   const out=await sess.run({input:new ort.Tensor("float32",x,[1,3,S,S])});
   const logits=[...out.logits.data],F=out.features,[_,Cn,Hh,Ww]=F.dims,fd=F.data;
@@ -363,7 +402,8 @@ async function analyze(item){
   const target=label==="healthy"?meta.classes.indexOf("arsenic"):top;
   const Wt=meta.classifier_weight[target],cam=new Float32Array(Hh*Ww);
   for(let c=0;c<Cn;c++){const w=Wt[c];if(!w)continue;const o=c*Hh*Ww;for(let k=0;k<Hh*Ww;k++)cam[k]+=w*fd[o+k]}
-  item.res={p,label,conf:p[top],cam,camTarget:meta.classes[target],Hh,Ww,lum,sharp,short:Math.min(item.bmp.width,item.bmp.height),ms:Math.round(performance.now()-t0)};
+  item.res={p,label,conf:p[top],cam,camTarget:meta.classes[target],Hh,Ww,lum,sharp,short:item.box.s,ms:Math.round(performance.now()-t0)};
+  item.busy=false;
   if(current===item)renderResult(item);
   renderHist();
 }
@@ -388,31 +428,34 @@ function drawCam(item){
 $("#camT").addEventListener("change",()=>{$("#heat").style.opacity=$("#camT").checked?1:0});
 
 function renderResult(item){
-  const r=item.res;$("#stage").classList.remove("busy");drawCam(item);
+  const r=item.res;$("#stage").classList.remove("busy");$("#cropbox").classList.add("hide");$("#croprow").classList.add("hide");$("#recrop").classList.remove("hide");drawPhoto(item,true);drawCam(item);
   const q=[];
-  q.push(r.short<300?["warn","ภาพเล็ก "+r.short+" px ควรถ่ายใหม่ให้ใกล้ขึ้น"]:["ok","ขนาดภาพพอใช้"]);
+  q.push(r.short<200?["warn","บริเวณที่เลือกเล็ก "+r.short+" px ควรถ่ายใกล้ขึ้น"]:["ok","ขนาดพอใช้"]);
   q.push(r.lum<55?["warn","ภาพมืดเกินไป"]:r.lum>215?["warn","ภาพสว่างจ้าเกินไป"]:["ok","แสงพอดี"]);
   q.push(r.sharp<40?["warn","ภาพอาจเบลอ"]:["ok","ภาพคมชัด"]);
   $("#qc").innerHTML=q.map(([c,t])=>`<span class="${c}">${esc(t)}</span>`).join("");
-  const ar=r.p[meta.classes.indexOf("arsenic")],unsure=r.conf<meta.tau,poor=q.some(x=>x[0]==="warn");
+  const LV=meta.levels||[0.6,0.85];
+  const level=v=>v>=LV[1]?[3,"สัญญาณชัด"]:v>=LV[0]?[2,"พอมีสัญญาณ"]:v>=0.3?[1,"สัญญาณอ่อน"]:[0,"ไม่พบสัญญาณ"];
+  const ar=r.p[meta.classes.indexOf("arsenic")],arL=level(ar)[1],unsure=r.conf<meta.tau,poor=q.some(x=>x[0]==="warn");
   let tier,small,title,body,adv;
   if(unsure){tier="t-grey";small="ไม่แน่ใจ";title="AI ยังตัดสินไม่ได้";
-    body="ความมั่นใจสูงสุดอยู่ที่ "+pct(r.conf)+" ต่ำกว่าเกณฑ์ "+pct(meta.tau)+" ลองถ่ายใหม่ให้ใกล้และชัดขึ้น";
+    body="สัญญาณยังไม่ชัดพอจะสรุปได้ ลองเลือกบริเวณใหม่ หรือถ่ายใหม่ให้ใกล้และชัดขึ้น";
     adv="ถ้าถ่ายใหม่แล้วยังไม่แน่ใจ และมีประวัติใช้น้ำในพื้นที่เสี่ยง ควรให้แพทย์หรือเจ้าหน้าที่ รพ.สต. ดูรอยโรคโดยตรง";}
   else if(r.label==="arsenic"){tier="t-red";small="ควรพบแพทย์";title="พบลักษณะที่เข้าได้กับรอยโรคจากสารหนู";
-    body="AI ให้ความน่าจะเป็น "+pct(ar)+" ว่าเป็นรอยโรคจากสารหนู";
+    body="สัญญาณรอยโรคจากสารหนูอยู่ในระดับ "+arL;
     adv="<b>ขั้นต่อไป</b> นำรูปนี้ไปพบแพทย์หรือ รพ.สต. ใกล้บ้าน แจ้งแหล่งน้ำที่ใช้ดื่มและทำอาหาร และขอตรวจสารหนูในปัสสาวะ ระหว่างนี้งดใช้น้ำจากแหล่งที่สงสัย";}
   else if(r.label==="other"){tier="t-amber";small="ไม่ใช่ลักษณะสารหนูที่ชัด";title="ลักษณะคล้ายโรคผิวหนังชนิดอื่น";
-    body="AI คิดว่าน่าจะเป็นโรคผิวหนังอื่น เช่น หนังด้าน หูด เชื้อรา หรือผื่นอักเสบ ความน่าจะเป็นที่เป็นสารหนู "+pct(ar);
+    body="AI คิดว่าน่าจะเป็นโรคผิวหนังอื่น เช่น หนังด้าน หูด เชื้อรา หรือผื่นอักเสบ สัญญาณสารหนูอยู่ในระดับ "+arL;
     adv="ถ้ารอยโรคไม่หายใน 2 ถึง 4 สัปดาห์ หรือมีหลายจุดที่ฝ่ามือฝ่าเท้า ควรพบแพทย์ ผลนี้ไม่ได้ตัดโอกาสสัมผัสสารหนูออก ถ้าใช้น้ำในพื้นที่เสี่ยง";}
   else{tier="t-green";small="ไม่พบรอยโรคชัดเจน";title="ผิวดูปกติในรูปนี้";
-    body="AI ไม่พบลักษณะผิดปกติที่ชัดเจน ความน่าจะเป็นที่เป็นสารหนู "+pct(ar);
+    body="AI ไม่พบลักษณะผิดปกติที่ชัดเจน สัญญาณสารหนูอยู่ในระดับ "+arL;
     adv="รอยโรคจากสารหนูมักขึ้นที่ฝ่ามือฝ่าเท้าทั้งสองข้าง ถ้าใช้น้ำในพื้นที่เสี่ยง ลองถ่ายทั้งสองมือและสองเท้าแยกกัน และตรวจคุณภาพน้ำร่วมด้วย";}
   if(poor&&!unsure)adv+=" คุณภาพรูปมีข้อควรระวัง ผลอาจคลาดเคลื่อน";
   const order=["arsenic","other","healthy"];
   if(meta.demo)small="ผลจำลอง "+small;
   $("#verdict").innerHTML=`<div class="tier ${tier}"><small>${esc(small)}</small><h2>${esc(title)}</h2><p>${esc(body)}</p></div>
-  <div class="bars">${order.map(k=>{const v=r.p[meta.classes.indexOf(k)];return `<div class="bar-row"><span>${esc(NAMES[k])}</span><div class="track"><div class="fill" style="width:${(100*v).toFixed(1)}%;background:${COLORS[k]}"></div></div><b>${pct(v)}</b></div>`}).join("")}</div>
+  <div class="bars">${order.map(k=>{const v=r.p[meta.classes.indexOf(k)];return `<div class="bar-row"><span>${esc(NAMES[k])}</span><div class="seg">${[1,2,3].map(j=>`<i style="${level(v)[0]>=j?"background:"+COLORS[k]:""}"></i>`).join("")}</div><b>${level(v)[1]}</b></div>`}).join("")}</div>
+  <p class="note">ระดับสัญญาณคือคะแนนของ AI ไม่ใช่โอกาสที่จะป่วยจริง</p>
   <div class="advice">${adv}<br><br>จุดสีแดงบนภาพคือบริเวณที่ทำให้ AI คิดว่าเป็น${esc(NAMES[r.camTarget])} วิเคราะห์ในเครื่องนี้ใช้เวลา ${r.ms} มิลลิวินาที ผลนี้ใช้คัดกรองเท่านั้น ไม่ใช่การวินิจฉัย</div>`;
 }
 
